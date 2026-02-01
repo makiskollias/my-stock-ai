@@ -12,20 +12,23 @@ CORS(app)  # Επιτρέπει στο WordPress να "μιλάει" με τον
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, price, rsi, signal):
-    """Στέλνει τα δεδομένα στο Gemini για ανάλυση στα Ελληνικά"""
-    prompt = (f"Είσαι έμπειρος οικονομικός αναλυτής. Η μετοχή {ticker} έχει τιμή {price} "
-              f"και δείκτη RSI {rsi}. Το τεχνικό σήμα είναι {signal}. "
-              f"Δώσε μια σύντομη ανάλυση 2-3 προτάσεων στα Ελληνικά για την τάση.")
+    prompt = (f"Είσαι οικονομικός αναλυτής. Η μετοχή {ticker} έχει τιμή {price} "
+              f"και RSI {rsi}. Το σήμα είναι {signal}. "
+              f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Διορθωμένη κλήση μοντέλου χωρίς το πρόθεμα "models/"
+        # ΔΟΚΙΜΑΣΕ ΑΥΤΟ: Αφαίρεσε τελείως το 'model=' αν συνεχίζει το σφάλμα
+        # ή γράψε το μοντέλο σκέτο χωρίς παραμέτρους αν χρησιμοποιείς το νέο SDK
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model='gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        return f"Η ανάλυση AI δεν είναι διαθέσιμη προσωρινά. (Error: {str(e)})"
+        # Αν αποτύχει πάλι, θα μας πει ακριβώς τι φταίει
+        return f"AI Error: {str(e)}"
+
+
 
 @app.route('/analyze', methods=['GET'])
 def analyze():
