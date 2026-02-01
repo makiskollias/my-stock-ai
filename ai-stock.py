@@ -22,9 +22,9 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Χρησιμοποιούμε το όνομα του μοντέλου χωρίς το πρόθεμα models/
+        # Στην έκδοση v1, το API απαιτεί το πρόθεμα 'models/' 
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='models/gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
