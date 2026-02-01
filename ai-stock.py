@@ -4,7 +4,7 @@ from flask_cors import CORS
 from google import genai
 
 # Ρύθμιση Gemini (Χρησιμοποιώντας τη νέα βιβλιοθήκη google-genai)
-client = genai.Client(api_key="AIzaSyACAn--HpeMIDQGZ90RnGe1-VXkcEHtzn0")
+client = genai.Client(api_key="AIzaSyAR3IARCAKlx71TKQU9ci0VJFK68cVPEzE")
 
 app = Flask(__name__)
 CORS(app)
