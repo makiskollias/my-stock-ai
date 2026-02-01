@@ -11,23 +11,19 @@ CORS(app)
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
-    """Προχωρημένη ανάλυση AI με τεχνικά και θεμελιώδη δεδομένα"""
-    prompt = (f"Λειτούργησε ως έμπειρος επενδυτικός σύμβουλος. "
-              f"Ανάλυσε τη μετοχή {ticker} με τα εξής δεδομένα: "
-              f"Τιμή: ${data['price']}, RSI: {data['rsi']}, "
-              f"P/E Ratio: {data['pe']}, Περιθώριο Κέρδους: {data['margins']}. "
-              f"Το τεχνικό σήμα είναι {data['signal']}. "
-              f"Δώσε μια επαγγελματική σύνοψη 3 προτάσεων στα Ελληνικά, "
-              f"αναφέροντας αν η μετοχή φαίνεται υπερτιμημένη ή ευκαιρία.")
+    prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
+              f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
+              f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
+        # Η ΔΙΟΡΘΩΣΗ: Χρησιμοποιούμε το μοντέλο ΧΩΡΙΣ το 'models/' μπροστά
         response = client.models.generate_content(
-            model="gemini-1.5-flash", # Διορθωμένο όνομα μοντέλου
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        return f"AI Analysis Error: {str(e)}"
+        return f"AI Error: {str(e)}"
 
 @app.route('/analyze', methods=['GET'])
 def analyze():
