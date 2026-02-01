@@ -9,36 +9,29 @@ app = Flask(__name__)
 CORS(app)
 
 
-# Ορίζουμε τον client με απόλυτο τρόπο
-client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
-    http_options={'api_version': 'v1'}
-)
+# Ορίζουμε τον client χωρίς να επιβάλλουμε έκδοση χειροκίνητα
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
               f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
-    try:
-        # Χρησιμοποιούμε το μοντέλο ΧΩΡΙΣ το πρόθεμα models/ 
-        # καθώς η έκδοση v1 το διαχειρίζεται διαφορετικά
-        response = client.models.generate_content(
-            model="gemini-1.5-flash", 
-            contents=prompt
-        )
-        return response.text
-    except Exception as e:
-        # Αν αποτύχει η v1, δοκιμάζουμε το πλήρες όνομα ως έσχατη λύση
+    # Δοκιμάζουμε τις 3 πιο πιθανές ονομασίες μοντέλου σε σειρά
+    model_names = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-pro"]
+    
+    for model_name in model_names:
         try:
             response = client.models.generate_content(
-                model="models/gemini-1.5-flash", 
+                model=model_name, 
                 contents=prompt
             )
             return response.text
-        except:
-            return f"AI Error: {str(e)}"
-
+        except Exception as e:
+            last_error = str(e)
+            continue # Δοκίμασε το επόμενο μοντέλο αν το τωρινό βγάλει 404
+            
+    return f"AI Error: Όλα τα μοντέλα απέτυχαν. Τελευταίο σφάλμα: {last_error}"
 
 
 
