@@ -16,7 +16,7 @@ def get_ai_opinion(ticker, price, rsi, signal):
     
     # Αλλαγή στο όνομα του μοντέλου για να είναι σίγουρα συμβατό
     response = client.models.generate_content(
-        model="gemini-2.0-flash", # Δοκιμάζουμε την πιο πρόσφατη έκδοση
+        model="gemini-1.5-flash"
         contents=prompt
     )
     return response.text
