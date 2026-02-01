@@ -20,14 +20,22 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Άλλαξε το gemini-2.0-flash σε gemini-1.5-flash
+        # Στην έκδοση v1beta, το SDK συχνά απαιτεί το όνομα χωρίς το πρόθεμα models/
         response = client.models.generate_content(
             model='gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        return f"AI Error (Gemini 2.0): {str(e)}"
+        # Αν αποτύχει, δοκιμάζουμε το πλήρες όνομα ως έσχατη λύση
+        try:
+            response = client.models.generate_content(
+                model='models/gemini-1.5-flash', 
+                contents=prompt
+            )
+            return response.text
+        except:
+            return f"AI Error: {str(e)}"
 
 
 
