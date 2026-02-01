@@ -10,14 +10,12 @@ client = genai.Client(api_key=os.environ.get("AIzaSyAR3IARCAKlx71TKQU9ci0VJFK68c
 app = Flask(__name__)
 CORS(app)
 
-
 def get_ai_opinion(ticker, price, rsi, signal):
-    prompt = f"Η μετοχή {ticker} έχει τιμή {price} και RSI {rsi}. Το σήμα είναι {signal}. Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά για το τι πρέπει να προσέξει ένας επενδυτής."
+    prompt = f"Η μετοχή {ticker} έχει τιμή {price} και RSI {rsi}. Το σήμα είναι {signal}. Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά."
     
-    # Αλλαγή στο όνομα του μοντέλου για να είναι σίγουρα συμβατό
     response = client.models.generate_content(
-        model="gemini-1.5-flash"
-        contents=prompt
+        contents=prompt,          # <--- ΠΡΕΠΕΙ ΝΑ ΕΧΕΙ ΚΟΜΜΑ ΕΔΩ
+        model="gemini-1.5-flash"  
     )
     return response.text
 
