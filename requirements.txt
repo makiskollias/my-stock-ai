@@ -1,6 +1,6 @@
 flask
 flask-cors
 yfinance
-google-genai
+google-generativeai
 pandas
 gunicorn
