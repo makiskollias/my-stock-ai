@@ -9,10 +9,11 @@ app = Flask(__name__)
 CORS(app)
 
 
-
-
-# Ορίζουμε τον client χωρίς να επιβάλλουμε έκδοση, αφήνοντας τη βιβλιοθήκη να διαλέξει την καλύτερη
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+# Ορίζουμε τον client με απόλυτο τρόπο
+client = genai.Client(
+    api_key=os.environ.get("GEMINI_API_KEY"),
+    http_options={'api_version': 'v1'}
+)
 
 def get_ai_opinion(ticker, data):
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
@@ -20,15 +21,15 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Δοκιμάζουμε το μοντέλο ΧΩΡΙΣ το πρόθεμα models/ 
-        # αλλά με την παράμετρο model γραμμένη ακριβώς έτσι
+        # Χρησιμοποιούμε το μοντέλο ΧΩΡΙΣ το πρόθεμα models/ 
+        # καθώς η έκδοση v1 το διαχειρίζεται διαφορετικά
         response = client.models.generate_content(
             model="gemini-1.5-flash", 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        # Αν αποτύχει, δοκιμάζουμε αυτόματα τη δεύτερη πιθανή ονομασία
+        # Αν αποτύχει η v1, δοκιμάζουμε το πλήρες όνομα ως έσχατη λύση
         try:
             response = client.models.generate_content(
                 model="models/gemini-1.5-flash", 
