@@ -8,10 +8,10 @@ from google import genai
 app = Flask(__name__)
 CORS(app)
 
-# Η ΜΟΝΗ ΣΩΣΤΗ ΑΡΧΙΚΟΠΟΙΗΣΗ ΓΙΑ ΤΟ ΣΥΓΚΕΚΡΙΜΕΝΟ SDK
+# Αρχικοποίηση για Gemini 2.0
 client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
-    http_options={'api_version': 'v1'} # Επιβολή v1
+    api_key=os.environ.get("GEMINI_API_KEY")
+    # Αφαιρούμε το http_options για να αφήσουμε το 2.0 να διαλέξει μόνο του
 )
 
 def get_ai_opinion(ticker, data):
@@ -20,17 +20,14 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Χρησιμοποιούμε το πιο σταθερό όνομα μοντέλου για την έκδοση v1
+        # Χρησιμοποιούμε το 2.0 Flash
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-2.0-flash', 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        return f"AI Error: {str(e)}"
-
-
-
+        return f"AI Error (Gemini 2.0): {str(e)}"
 
 
 
