@@ -1,18 +1,8 @@
 import os
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import yfinance as yf
-import pandas as pd
-from google import genai
+import google.generativeai as genai  # Η εναλλακτική βιβλιοθήκη
 
-app = Flask(__name__)
-CORS(app)
-
-# Αρχικοποίηση για Gemini 2.0
-client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY")
-    # Αφαιρούμε το http_options για να αφήσουμε το 2.0 να διαλέξει μόνο του
-)
+# Ρύθμιση του API
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
@@ -20,23 +10,12 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Στην έκδοση v1beta, το SDK συχνά απαιτεί το όνομα χωρίς το πρόθεμα models/
-        response = client.models.generate_content(
-            model='gemini-1.5-flash', 
-            contents=prompt
-        )
+        # Αυτή η βιβλιοθήκη χρησιμοποιεί το 'GenerativeModel'
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        # Αν αποτύχει, δοκιμάζουμε το πλήρες όνομα ως έσχατη λύση
-        try:
-            response = client.models.generate_content(
-                model='models/gemini-1.5-flash', 
-                contents=prompt
-            )
-            return response.text
-        except:
-            return f"AI Error: {str(e)}"
-
+        return f"AI Error: {str(e)}"
 
 
 
