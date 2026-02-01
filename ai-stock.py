@@ -20,9 +20,9 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Χρησιμοποιούμε το 2.0 Flash
+        # Άλλαξε το gemini-2.0-flash σε gemini-1.5-flash
         response = client.models.generate_content(
-            model='gemini-2.0-flash', 
+            model='gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
