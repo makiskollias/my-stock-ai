@@ -2,9 +2,10 @@ import yfinance as yf
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from google import genai
+# ΑΝΤΙ ΓΙΑ ΤΟ ΚΛΕΙΔΙ, ΓΡΑΦΟΥΜΕ ΑΥΤΟ:
+import os
+client = genai.Client(api_key=os.environ.get("AIzaSyAR3IARCAKlx71TKQU9ci0VJFK68cVPEzE"))
 
-# Ρύθμιση Gemini (Χρησιμοποιώντας τη νέα βιβλιοθήκη google-genai)
-client = genai.Client(api_key="AIzaSyAR3IARCAKlx71TKQU9ci0VJFK68cVPEzE")
 
 app = Flask(__name__)
 CORS(app)
