@@ -6,76 +6,69 @@ import pandas as pd
 from google import genai
 
 app = Flask(__name__)
-CORS(app)  # Επιτρέπει στο WordPress να "μιλάει" με τον server
+CORS(app)
 
-# Ρύθμιση του Gemini API μέσω Environment Variable για ασφάλεια
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-def get_ai_opinion(ticker, price, rsi, signal):
-    prompt = (f"Είσαι οικονομικός αναλυτής. Η μετοχή {ticker} έχει τιμή {price} "
-              f"και RSI {rsi}. Το σήμα είναι {signal}. "
-              f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
+def get_ai_opinion(ticker, data):
+    """Προχωρημένη ανάλυση AI με τεχνικά και θεμελιώδη δεδομένα"""
+    prompt = (f"Λειτούργησε ως έμπειρος επενδυτικός σύμβουλος. "
+              f"Ανάλυσε τη μετοχή {ticker} με τα εξής δεδομένα: "
+              f"Τιμή: ${data['price']}, RSI: {data['rsi']}, "
+              f"P/E Ratio: {data['pe']}, Περιθώριο Κέρδους: {data['margins']}. "
+              f"Το τεχνικό σήμα είναι {data['signal']}. "
+              f"Δώσε μια επαγγελματική σύνοψη 3 προτάσεων στα Ελληνικά, "
+              f"αναφέροντας αν η μετοχή φαίνεται υπερτιμημένη ή ευκαιρία.")
     
     try:
-        # ΔΟΚΙΜΑΣΕ ΑΥΤΟ: Αφαίρεσε τελείως το 'model=' αν συνεχίζει το σφάλμα
-        # ή γράψε το μοντέλο σκέτο χωρίς παραμέτρους αν χρησιμοποιείς το νέο SDK
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model="gemini-1.5-flash", # Διορθωμένο όνομα μοντέλου
             contents=prompt
         )
         return response.text
     except Exception as e:
-        # Αν αποτύχει πάλι, θα μας πει ακριβώς τι φταίει
-        return f"AI Error: {str(e)}"
-
-
+        return f"AI Analysis Error: {str(e)}"
 
 @app.route('/analyze', methods=['GET'])
 def analyze():
     symbol = request.args.get('symbol')
     if not symbol:
-        return jsonify({"error": "No symbol provided"}), 400
+        return jsonify({"error": "No symbol"}), 400
 
     try:
-        # Λήψη δεδομένων από Yahoo Finance
         stock = yf.Ticker(symbol)
         df = stock.history(period="1y")
+        info = stock.info
 
         if df.empty:
-            return jsonify({"error": "Symbol not found"}), 404
+            return jsonify({"error": "No data"}), 404
 
-        # Υπολογισμός RSI (Relative Strength Index)
+        # Τεχνικά (RSI)
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        current_rsi = round(rsi.iloc[-1], 2)
-        current_price = round(df['Close'].iloc[-1], 2)
-
-        # Βασικό τεχνικό σήμα
-        if current_rsi > 70:
-            signal = "Overbought (Sell Signal)"
-        elif current_rsi < 30:
-            signal = "Oversold (Buy Signal)"
-        else:
-            signal = "Neutral (Wait)"
-
-        # Λήψη ανάλυσης από το Gemini
-        ai_analysis = get_ai_opinion(symbol, current_price, current_rsi, signal)
-
-        return jsonify({
+        current_rsi = round(100 - (100 / (1 + rs)).iloc[-1], 2)
+        
+        # Θεμελιώδη (Fundamentals)
+        pe_ratio = info.get('forwardPE', 'N/A')
+        profit_margins = info.get('profitMargins', 0) * 100
+        
+        current_data = {
             "ticker": symbol,
-            "price": current_price,
+            "price": round(df['Close'].iloc[-1], 2),
             "rsi": current_rsi,
-            "signal": signal,
-            "ai_analysis": ai_analysis
-        })
+            "pe": pe_ratio,
+            "margins": f"{round(profit_margins, 2)}%",
+            "signal": "Overbought" if current_rsi > 70 else ("Oversold" if current_rsi < 30 else "Neutral")
+        }
+
+        current_data["ai_analysis"] = get_ai_opinion(symbol, current_data)
+        return jsonify(current_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Ο Render απαιτεί τη χρήση της PORT από το περιβάλλον
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
