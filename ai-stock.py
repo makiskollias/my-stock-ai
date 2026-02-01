@@ -12,7 +12,12 @@ CORS(app)
 
 def get_ai_opinion(ticker, price, rsi, signal):
     prompt = f"Η μετοχή {ticker} έχει τιμή {price} και RSI {rsi}. Το σήμα είναι {signal}. Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά για το τι πρέπει να προσέξει ένας επενδυτής."
-    response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+    
+    # Αλλαγή στο όνομα του μοντέλου για να είναι σίγουρα συμβατό
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", # Δοκιμάζουμε την πιο πρόσφατη έκδοση
+        contents=prompt
+    )
     return response.text
 
 
