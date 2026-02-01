@@ -10,30 +10,30 @@ CORS(app)
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
+# Επιβάλλουμε τη χρήση της έκδοσης v1 του API
+client = genai.Client(
+    api_key=os.environ.get("GEMINI_API_KEY"),
+    http_options={'api_version': 'v1'}
+)
+
 def get_ai_opinion(ticker, data):
-    """Προχωρημένη ανάλυση AI με τη σωστή σύνταξη μοντέλου"""
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
               f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Δοκιμάζουμε την κλήση χωρίς καθόλου το όνομα 'model=' μέσα στη μέθοδο
-        # αν η βιβλιοθήκη το επιτρέπει, ή με το όνομα 'gemini-1.5-flash' σκέτο
+        # Χρησιμοποιούμε το όνομα του μοντέλου χωρίς το πρόθεμα models/
         response = client.models.generate_content(
             model='gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        # Αν αποτύχει, θα δοκιμάσουμε εναλλακτική ονομασία αυτόματα
-        try:
-             response = client.models.generate_content(
-                model='gemini-1.5-flash-latest', 
-                contents=prompt
-            )
-             return response.text
-        except:
-            return f"AI Error: {str(e)}"
+        return f"AI Error: {str(e)}"
+
+
+
+
 
 
 @app.route('/analyze', methods=['GET'])
