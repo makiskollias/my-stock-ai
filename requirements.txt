@@ -1,0 +1,6 @@
+flask
+flask-cors
+yfinance
+google-genai
+pandas
+gunicorn
