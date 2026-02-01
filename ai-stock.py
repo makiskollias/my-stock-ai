@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)  # Επιτρέπει στο WordPress να "μιλάει" με τον server
 
 # Ρύθμιση του Gemini API μέσω Environment Variable για ασφάλεια
-client = genai.Client(api_key=os.environ.get("AIzaSyAR3IARCAKlx71TKQU9ci0VJFK68cVPEzE"))
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, price, rsi, signal):
     """Στέλνει τα δεδομένα στο Gemini για ανάλυση στα Ελληνικά"""
@@ -76,6 +76,3 @@ if __name__ == '__main__':
     # Ο Render απαιτεί τη χρήση της PORT από το περιβάλλον
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-
-
