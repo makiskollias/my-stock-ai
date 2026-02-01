@@ -8,13 +8,11 @@ from google import genai
 app = Flask(__name__)
 CORS(app)
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Επιβάλλουμε τη χρήση της έκδοσης v1 του API
-client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
-    http_options={'api_version': 'v1'}
-)
+
+
+# Ορίζουμε τον client χωρίς να επιβάλλουμε έκδοση, αφήνοντας τη βιβλιοθήκη να διαλέξει την καλύτερη
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
@@ -22,14 +20,28 @@ def get_ai_opinion(ticker, data):
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Στην έκδοση v1, το API απαιτεί το πρόθεμα 'models/' 
+        # Δοκιμάζουμε το μοντέλο ΧΩΡΙΣ το πρόθεμα models/ 
+        # αλλά με την παράμετρο model γραμμένη ακριβώς έτσι
         response = client.models.generate_content(
-            model='models/gemini-1.5-flash', 
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         return response.text
     except Exception as e:
-        return f"AI Error: {str(e)}"
+        # Αν αποτύχει, δοκιμάζουμε αυτόματα τη δεύτερη πιθανή ονομασία
+        try:
+            response = client.models.generate_content(
+                model="models/gemini-1.5-flash", 
+                contents=prompt
+            )
+            return response.text
+        except:
+            return f"AI Error: {str(e)}"
+
+
+
+
+
 
 
 
