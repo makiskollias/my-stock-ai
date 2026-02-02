@@ -1,28 +1,33 @@
-# Version 2.0 Final
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import yfinance as yf
 import pandas as pd
 import google.generativeai as genai
+from google.generativeai.types import RequestOptions
 
 # 1. Αρχικοποίηση Flask & CORS
 app = Flask(__name__)
 CORS(app)
 
-# 2. Ρύθμιση της βιβλιοθήκης Gemini (google-generativeai)
+# 2. Ρύθμιση της βιβλιοθήκης Gemini
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
-    """Συνάρτηση για τη λήψη ανάλυσης από το Gemini 1.5 Flash"""
+    """Συνάρτηση για τη λήψη ανάλυσης με επιβολή της έκδοσης v1"""
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
               f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Χρήση του σταθερού μοντέλου 1.5 Flash
+        # Χρήση του σταθερού μοντέλου gemini-1.5-flash
         model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
+        
+        # ΕΠΙΒΟΛΗ API VERSION v1: Αυτό διορθώνει το σφάλμα 404 της v1beta
+        response = model.generate_content(
+            prompt,
+            request_options=RequestOptions(api_version='v1')
+        )
         return response.text
     except Exception as e:
         return f"AI Error: {str(e)}"
@@ -42,7 +47,7 @@ def analyze():
         if df.empty:
             return jsonify({"error": f"No data found for symbol {symbol}"}), 404
 
-        # Υπολογισμός RSI (Τεχνική Ανάλυση)
+        # Υπολογισμός RSI
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -71,7 +76,8 @@ def analyze():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# 4. Εκκίνηση του Server
+# 3. Εκκίνηση του Server
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    # Το Render παρέχει τη θύρα μέσω της μεταβλητής περιβάλλοντος PORT
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
