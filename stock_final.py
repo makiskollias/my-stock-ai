@@ -10,49 +10,61 @@ app = Flask(__name__)
 CORS(app)
 
 
+
 def get_ai_opinion(ticker, data):
     api_key = os.environ.get("GEMINI_API_KEY")
     
-    # 1. Δυναμική εύρεση διαθέσιμου μοντέλου (ListModels)
+    # Αυστηρό Prompt για να μην αποκαλύπτεται η πηγή
+    system_instruction = (
+        "Είσαι ένας κορυφαίος οικονομικός αναλυτής με ειδίκευση στις αγορές των ΗΠΑ. "
+        "Μην αναφέρεις ΠΟΤΕ ότι είσαι τεχνητή νοημοσύνη, μοντέλο γλώσσας ή το όνομα Gemini. "
+        "Η ανάλυσή σου πρέπει να είναι αυστηρή, επαγγελματική και να εστιάζει στα νούμερα."
+    )
+    
+    prompt = (
+        f"{system_instruction}\n\n"
+        f"Ανάλυσε τη μετοχή {ticker} με τα εξής δεδομένα:\n"
+        f"- Τιμή: ${data['price']}\n"
+        f"- RSI: {data['rsi']}\n"
+        f"- P/E Ratio: {data['pe']}\n"
+        f"- Περιθώρια Κέρδους: {data['margins']}\n"
+        f"- Τεχνικό Σήμα: {data['signal']}\n\n"
+        f"Δώσε μια σύντομη ανάλυση 2-3 προτάσεων στα Ελληνικά, ξεκινώντας απευθείας με την ουσία."
+    )
+
+    # Η διαδικασία Auto-Discovery παραμένει ίδια για να μην έχουμε πάλι 404
     list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
     
     try:
         models_resp = requests.get(list_url)
         models_data = models_resp.json()
-        
-        # Ψάχνουμε το πρώτο μοντέλο που υποστηρίζει generateContent
-        # Προτιμάμε το flash αν υπάρχει, αλλιώς το πρώτο διαθέσιμο
-        target_model = None
-        for m in models_data.get('models', []):
-            if 'generateContent' in m.get('supportedGenerationMethods', []):
-                if 'flash' in m['name']:
-                    target_model = m['name'] # Βρήκαμε το Flash!
-                    break
-                if not target_model:
-                    target_model = m['name']
+        target_model = next((m['name'] for m in models_data.get('models', []) 
+                            if 'generateContent' in m.get('supportedGenerationMethods', []) 
+                            and 'flash' in m['name']), None)
 
-        if not target_model:
-            return "AI Error: No supported models found for this API key."
+        if not target_model: return "Ανάλυση μη διαθέσιμη προσωρινά."
 
-        # 2. Κλήση για την ανάλυση με το σωστό μοντέλο
         analyze_url = f"https://generativelanguage.googleapis.com/v1beta/{target_model}:generateContent?key={api_key}"
-        
-        prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
-                  f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
-                  f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
-
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         
         resp = requests.post(analyze_url, json=payload, timeout=30)
         result = resp.json()
 
-        if resp.status_code != 200:
-            return f"AI Error: {result.get('error', {}).get('message', 'Unknown API error')}"
-
         return result["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception:
+        return "Σφάλμα κατά την επεξεργασία της ανάλυσης."
 
-    except Exception as e:
-        return f"System Error: {str(e)}"
+
+
+
+
+
+
+
+
+
+
+
 
 
 
