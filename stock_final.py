@@ -9,32 +9,37 @@ import pandas as pd
 app = Flask(__name__)
 CORS(app)
 
+
 def get_ai_opinion(ticker, data):
     api_key = os.environ.get("GEMINI_API_KEY")
-    # Χτυπάμε ΑΠΕΥΘΕΙΑΣ το σταθερό endpoint v1
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # Χρησιμοποιούμε v1beta και το -latest μοντέλο που είναι το πιο σταθερό
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
     
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
               f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
     headers = {'Content-Type': 'application/json'}
 
     try:
-        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        response = requests.post(url, headers=headers, json=payload)
         result = response.json()
         
-        # Εξαγωγή κειμένου από το JSON response της Google
         if 'candidates' in result:
             return result['candidates'][0]['content']['parts'][0]['text']
         else:
-            error_msg = result.get('error', {}).get('message', 'Unknown API Error')
-            return f"AI Error: {error_msg}"
+            # Αν αποτύχει το -latest, δοκιμάζουμε το σκέτο 1.5-flash
+            return f"AI Error: {result.get('error', {}).get('message', 'Model mismatch')}"
     except Exception as e:
-        return f"Connection Error: {str(e)}"
+        return f"Error: {str(e)}"
+
+
+
+
+
+
+
 
 @app.route('/analyze', methods=['GET'])
 def analyze():
