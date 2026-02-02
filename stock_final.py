@@ -14,20 +14,17 @@ CORS(app)
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def get_ai_opinion(ticker, data):
-    """Συνάρτηση για τη λήψη ανάλυσης με επιβολή της έκδοσης v1"""
     prompt = (f"Ανάλυσε τη μετοχή {ticker}: Τιμή ${data['price']}, RSI {data['rsi']}, "
               f"P/E {data['pe']}, Margins {data['margins']}. Σήμα: {data['signal']}. "
               f"Δώσε μια σύντομη ανάλυση 2 προτάσεων στα Ελληνικά.")
     
     try:
-        # Χρήση του σταθερού μοντέλου gemini-1.5-flash
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Δημιουργούμε το μοντέλο χρησιμοποιώντας απευθείας το όνομα 
+        # που δείχνει στη σταθερή έκδοση v1
+        model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
         
-        # ΕΠΙΒΟΛΗ API VERSION v1: Αυτό διορθώνει το σφάλμα 404 της v1beta
-        response = model.generate_content(
-            prompt,
-            request_options=RequestOptions(api_version='v1')
-        )
+        # Απλή κλήση χωρίς RequestOptions που μπερδεύουν τη βιβλιοθήκη
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"AI Error: {str(e)}"
